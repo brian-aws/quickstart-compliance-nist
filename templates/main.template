@@ -168,6 +168,10 @@ Mappings:
       ConfigRules: 'true'
       NatGateway: 'true'
       Glacier: 'true'
+    us-gov-east-1:
+      ConfigRules: 'true'
+      NatGateway: 'true'
+      Glacier: 'true'
     us-west-1:
       ConfigRules: 'true'
       NatGateway: 'true'
@@ -231,6 +235,10 @@ Mappings:
       AMZNLINUXHVM: ami-ffa61d9e
       InstanceType: m4.large
       InstanceTypeDatabase: db.m3.large
+    us-gov-east-1:
+      AMZNLINUXHVM: ami-43896f32
+      InstanceType: m4.large
+      InstanceTypeDatabase: db.m3.large
     us-west-1:
       AMZNLINUXHVM: ami-0ec6517f6edbf8044
       InstanceType: m4.large
@@ -242,8 +250,8 @@ Mappings:
 Conditions:
   GovCloudCondition:
     !Equals
-    - !Ref AWS::Region
-    - us-gov-west-1
+    - !Ref AWS::Partition
+    - aws-us-gov
   LoadConfigRulesTemplate:
     !Equals
     - !Ref pSupportsConfig
@@ -258,24 +266,24 @@ Resources:
     Properties:
       TemplateURL:
         !Sub
-        - https://${QSS3BucketName}.${QSS3Region}.amazonaws.com/${QSS3KeyPrefix}submodules/quickstart-compliance-common/templates/iam.template
-        - QSS3Region:
+        - https://s3${QSS3Endpoint}${AWS::Region}.amazonaws.com/${QSS3BucketName}/${QSS3KeyPrefix}submodules/quickstart-compliance-common/templates/iam.template
+        - QSS3Endpoint:
             !If
             - GovCloudCondition
-            - s3-us-gov-west-1
-            - s3
+            - '-'
+            - '.'
       TimeoutInMinutes: 20
   LoggingTemplate:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL:
         !Sub
-        - https://${QSS3BucketName}.${QSS3Region}.amazonaws.com/${QSS3KeyPrefix}submodules/quickstart-compliance-common/templates/logging.template
-        - QSS3Region:
+        - https://s3${QSS3Endpoint}${AWS::Region}.amazonaws.com/${QSS3BucketName}/${QSS3KeyPrefix}submodules/quickstart-compliance-common/templates/logging.template
+        - QSS3Endpoint:
             !If
             - GovCloudCondition
-            - s3-us-gov-west-1
-            - s3
+            - '-'
+            - '.'
       TimeoutInMinutes: 20
       Parameters:
         pNotifyEmail: !Ref pNotifyEmail
@@ -289,12 +297,12 @@ Resources:
     Properties:
       TemplateURL:
         !Sub
-        - https://${QSS3BucketName}.${QSS3Region}.amazonaws.com/${QSS3KeyPrefix}submodules/quickstart-compliance-common/templates/vpc-production.template
-        - QSS3Region:
+        - https://s3${QSS3Endpoint}${AWS::Region}.amazonaws.com/${QSS3BucketName}/${QSS3KeyPrefix}submodules/quickstart-compliance-common/templates/vpc-production.template
+        - QSS3Endpoint:
             !If
             - GovCloudCondition
-            - s3-us-gov-west-1
-            - s3
+            - '-'
+            - '.'
       TimeoutInMinutes: 20
       Parameters:
         pRegionAZ1Name: !Select [ 0, !Ref pAvailabilityZones ]
@@ -338,12 +346,12 @@ Resources:
     Properties:
       TemplateURL:
         !Sub
-        - https://${QSS3BucketName}.${QSS3Region}.amazonaws.com/${QSS3KeyPrefix}submodules/quickstart-compliance-common/templates/vpc-management.template
-        - QSS3Region:
+        - https://s3${QSS3Endpoint}${AWS::Region}.amazonaws.com/${QSS3BucketName}/${QSS3KeyPrefix}submodules/quickstart-compliance-common/templates/vpc-management.template
+        - QSS3Endpoint:
             !If
             - GovCloudCondition
-            - s3-us-gov-west-1
-            - s3
+            - '-'
+            - '.'
       TimeoutInMinutes: 20
       Parameters:
         pProductionVPC:
@@ -414,12 +422,12 @@ Resources:
     Properties:
       TemplateURL:
         !Sub
-        - https://${QSS3BucketName}.${QSS3Region}.amazonaws.com/${QSS3KeyPrefix}submodules/quickstart-compliance-common/templates/config-rules.template
-        - QSS3Region:
+        - https://s3${QSS3Endpoint}${AWS::Region}.amazonaws.com/${QSS3BucketName}/${QSS3KeyPrefix}submodules/quickstart-compliance-common/templates/config-rules.template
+        - QSS3Endpoint:
             !If
             - GovCloudCondition
-            - s3-us-gov-west-1
-            - s3
+            - '-'
+            - '.'
       TimeoutInMinutes: 20
       Parameters:
         pRequiredTagKey:
@@ -433,12 +441,12 @@ Resources:
     Properties:
       TemplateURL:
         !Sub
-        - https://${QSS3BucketName}.${QSS3Region}.amazonaws.com/${QSS3KeyPrefix}templates/application.template
-        - QSS3Region:
+        - https://s3${QSS3Endpoint}${AWS::Region}.amazonaws.com/${QSS3BucketName}/${QSS3KeyPrefix}templates/application.template
+        - QSS3Endpoint:
             !If
             - GovCloudCondition
-            - s3-us-gov-west-1
-            - s3
+            - '-'
+            - '.'
       TimeoutInMinutes: 30
       Parameters:
         pSecurityAlarmTopic:
