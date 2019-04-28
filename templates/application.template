@@ -193,8 +193,8 @@ Mappings:
 Conditions:
   GovCloudCondition:
     !Equals
-    - !Ref AWS::Region
-    - us-gov-west-1
+    - !Ref AWS::Partition
+    - aws-us-gov
   SupportsGlacier:
     !Equals
     - !Ref pSupportsGlacier
@@ -217,12 +217,7 @@ Resources:
           Effect: Allow
           Resource:
             !Sub
-            - arn:${Partition}:s3:::${rS3ELBAccessLogs}/Logs/AWSLogs/${AWS::AccountId}/*
-            - Partition:
-                !If
-                - GovCloudCondition
-                - aws-us-gov
-                - aws
+            - arn:${AWS::Partition}:s3:::${rS3ELBAccessLogs}/Logs/AWSLogs/${AWS::AccountId}/*
           Principal:
             AWS:
               !FindInMap
@@ -402,12 +397,7 @@ Resources:
           Principal: '*'
           Resource:
             !Sub
-            - arn:${Partition}:s3:::${rWebContentBucket}
-            - Partition:
-                !If
-                - GovCloudCondition
-                - aws-us-gov
-                - aws
+            - arn:${AWS::Partition}:s3:::${rWebContentBucket}
           Condition:
             Bool:
               aws:SecureTransport: 'false'
@@ -417,12 +407,7 @@ Resources:
           Action: s3:PutObject
           Resource:
             !Sub
-            - arn:${Partition}:s3:::${rWebContentBucket}/*
-            - Partition:
-                !If
-                - GovCloudCondition
-                - aws-us-gov
-                - aws
+            - arn:${AWS::Partition}:s3:::${rWebContentBucket}/*
           Condition:
             StringNotEquals:
               s3:x-amz-server-side-encryption: AES256
@@ -891,10 +876,10 @@ Resources:
             ######################################################################
 
             # Download the landing page.
-            sudo wget https://${QSS3BucketName}.${QSS3Region}.amazonaws.com/${QSS3KeyPrefix}assets/landing/landing.html -O $LANDING_PAGE
+            sudo wget https://s3${QSS3Endpoint}${AWS::Region}.amazonaws.com/${QSS3BucketName}/${QSS3KeyPrefix}assets/landing/landing.html -O $LANDING_PAGE
 
             # Replace relative image links with links to the production S3 source.
-            sudo sed -i 's|images|https://${QSS3BucketName}.${QSS3Region}.amazonaws.com/${QSS3KeyPrefix}assets/landing/images|g' $LANDING_PAGE
+            sudo sed -i 's|images|https://s3${QSS3Endpoint}${AWS::Region}.amazonaws.com/${QSS3BucketName}/${QSS3KeyPrefix}assets/landing/images|g' $LANDING_PAGE
 
             # Inject the landing page branding label.
             sudo sed -i "s|{compliance-body}|$COMPLIANCE_BODY_LABEL|g" $LANDING_PAGE
@@ -903,12 +888,12 @@ Resources:
             sudo sed -i "s|{compliance-body-survey-link}|$COMPLIANCE_SURVEY_LINK|g" $LANDING_PAGE
 
             # Inject the security control matrix file location.
-            sudo sed -i "s|{compliance-body-matrix}|https://${QSS3BucketName}.${QSS3Region}.amazonaws.com/${QSS3KeyPrefix}assets/$COMPLIANCE_MATRIX_FILENAME|g" $LANDING_PAGE
-          - QSS3Region:
-              !If
-              - GovCloudCondition
-              - s3-us-gov-west-1
-              - s3
+            sudo sed -i "s|{compliance-body-matrix}|https://s3${QSS3Endpoint}${AWS::Region}.amazonaws.com/${QSS3BucketName}/${QSS3KeyPrefix}assets/$COMPLIANCE_MATRIX_FILENAME|g" $LANDING_PAGE
+          - QSS3Endpoint:
+            !If
+            - GovCloudCondition
+            - '-'
+            - '.'
   rAutoScalingGroupApp:
     Type: AWS::AutoScaling::AutoScalingGroup
     DependsOn: rAutoScalingConfigApp
